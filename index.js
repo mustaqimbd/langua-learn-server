@@ -43,6 +43,11 @@ async function run() {
             const result = await users.find().toArray()
             res.send(result)
         })
+        app.get('/user-role/:email', async (req, res) => {
+            const email = req.params.email;
+            const result = await users.findOne({ email: email })
+            res.send(result)
+        })
         app.patch('/update/user/:role', async (req, res) => {
             const role = req.params.role;
             const email = req.body;
