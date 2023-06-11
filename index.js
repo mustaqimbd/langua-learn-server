@@ -44,6 +44,10 @@ async function run() {
             const result = await usersCollection.find().toArray()
             res.send(result)
         })
+        app.get('/instructors', async (req, res) => {
+            const result = await usersCollection.find({ role: 'Instructor' }).toArray()
+            res.send(result)
+        })
         app.get('/user-role/:email', async (req, res) => {
             const email = req.params.email;
             const result = await usersCollection.findOne({ email: email })
@@ -78,8 +82,14 @@ async function run() {
             const result = await classesCollection.find({ instructorEmail: email }).toArray()
             res.send(result)
         })
-       
-        app.delete('/delete-my-class/:id',async(req,res)=>{
+        app.get('/my-class/:id', async (req, res) => {
+            const id = req.params.id;
+            console.log(id);
+            const query = { _id: new ObjectId(id) };
+            const result = await classesCollection.findOne(query)
+            res.send(result)
+        })
+        app.delete('/delete-my-class/:id', async (req, res) => {
             const id = req.params.id;
             console.log(id);
             const query = { _id: new ObjectId(id) };
