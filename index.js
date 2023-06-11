@@ -73,6 +73,19 @@ async function run() {
             const result = await classesCollection.insertOne(newClass);
             res.send(result)
         })
+        app.get('/my-classes/:email', async (req, res) => {
+            const email = req.params.email;
+            const result = await classesCollection.find({ instructorEmail: email }).toArray()
+            res.send(result)
+        })
+       
+        app.delete('/delete-my-class/:id',async(req,res)=>{
+            const id = req.params.id;
+            console.log(id);
+            const query = { _id: new ObjectId(id) };
+            const result = await classesCollection.deleteOne(query)
+            res.send(result)
+        })
 
         await client.db("admin").command({ ping: 1 });
         console.log("Pinged your deployment. You successfully connected to MongoDB!");
