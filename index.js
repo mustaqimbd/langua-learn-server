@@ -23,7 +23,8 @@ const client = new MongoClient(uri, {
 async function run() {
     try {
         await client.connect();
-        const users = client.db('langua_db').collection('users')
+        const usersCollection = client.db('langua_db').collection('users')
+        const classesCollection = client.db('langua_db').collection('classes')
         app.get('/', (req, res) => {
             res.send('The server is running')
         })
@@ -31,41 +32,47 @@ async function run() {
         app.post('/user', async (req, res) => {
             const user = req.body;
             console.log(user);
-            const result = await users.findOne({ email: user.email })
+            const result = await usersCollection.findOne({ email: user.email })
             if (result) {
                 return res.send({ message: 'User already exits' })
             } else {
-                const result = await users.insertOne(user)
+                const result = await usersCollection.insertOne(user)
                 res.send(result)
             }
         })
         app.get('/users', async (req, res) => {
-            const result = await users.find().toArray()
+            const result = await usersCollection.find().toArray()
             res.send(result)
         })
         app.get('/user-role/:email', async (req, res) => {
             const email = req.params.email;
-            const result = await users.findOne({ email: email })
+            const result = await usersCollection.findOne({ email: email })
             res.send(result)
         })
         app.patch('/update/user/:role', async (req, res) => {
             const role = req.params.role;
             const email = req.body;
-            const user = await users.findOne(email)
+            const user = await usersCollection.findOne(email)
             user.role = role;
             if (user) {
                 const updateDoc = { $set: { role: role } }
-                const result = await users.updateOne(email, updateDoc)
+                const result = await usersCollection.updateOne(email, updateDoc)
                 res.send(result)
             }
         })
         app.delete('/user/:id', async (req, res) => {
             const id = req.params.id;
             const query = { _id: new ObjectId(id) };
-            const result = await users.deleteOne(query)
+            const result = await usersCollection.deleteOne(query)
             res.send(result)
         })
 
+        app.post('/newclass', async (req, res) => {
+            const newClass = req.body;
+            console.log(newClass);
+            const result = await classesCollection.insertOne(newClass);
+            res.send(result)
+        })
 
         await client.db("admin").command({ ping: 1 });
         console.log("Pinged your deployment. You successfully connected to MongoDB!");
