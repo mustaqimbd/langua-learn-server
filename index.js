@@ -70,7 +70,24 @@ async function run() {
             const result = await usersCollection.deleteOne(query)
             res.send(result)
         })
+        app.get('/all-classes', async (req, res) => {
+            const query = req.query;
+            if (query) {
+                const result = await classesCollection.find(query).toArray();
+                res.send(result);
+            } else {
+                const result = await classesCollection.find().toArray();
+                res.send(result);
+            }
+        });
 
+        app.patch('/all-classes/:id', async (req, res) => {
+            const id = req.params.id;
+            const status = req.body;
+            const updateDoc = { $set: status }
+            const result = await classesCollection.updateOne({ _id: new ObjectId(id) }, updateDoc)
+            res.send(result)
+        })
         app.post('/newclass', async (req, res) => {
             const newClass = req.body;
             console.log(newClass);
