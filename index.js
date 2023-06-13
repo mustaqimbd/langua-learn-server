@@ -25,6 +25,7 @@ async function run() {
         await client.connect();
         const usersCollection = client.db('langua_db').collection('users')
         const classesCollection = client.db('langua_db').collection('classes')
+        const userSelectedclassesCollection = client.db('langua_db').collection('selected_classes')
         app.get('/', (req, res) => {
             res.send('The server is running')
         })
@@ -108,12 +109,57 @@ async function run() {
         })
         app.delete('/delete-my-class/:id', async (req, res) => {
             const id = req.params.id;
-            console.log(id);
             const query = { _id: new ObjectId(id) };
             const result = await classesCollection.deleteOne(query)
             res.send(result)
         })
-
+        app.patch('/selected-classes/:email', async (req, res) => {
+            const email = req.params.email;
+            let selectedId = req.body.id;
+            const deleteId = req.body.deleteId;
+            const user = await usersCollection.findOne({ email: email })
+            const filter = { email: email };
+            if (deleteId) {
+                const remainingId = user.selectedClasses?.filter((id) => id !== deleteId);
+                const updateDoc = {
+                    $set: {
+                        selectedClasses: remainingId
+                    },
+                };
+                const result = await usersCollection.updateOne(filter, updateDoc);
+                return res.send(result)
+            }
+            if (user.selectedClasses) {
+                const updateDoc = {
+                    $set: {
+                        selectedClasses: [...user.selectedClasses, selectedId]
+                    },
+                };
+                const result = await usersCollection.updateOne(filter, updateDoc);
+                res.send(result)
+            } else {
+                const updateDoc = {
+                    $set: {
+                        selectedClasses: [selectedId]
+                    },
+                };
+                const result = await usersCollection.updateOne(filter, updateDoc);
+                res.send(result);
+            }
+        })
+        app.get('/selected-classes', async (req, res) => {
+            const query = req.query;
+            if (query.selectedClasses) {
+                const selectedIds = query.selectedClasses
+                const ids = { _id: { $in: selectedIds.map(id => new ObjectId(id)) } };
+                const result = await classesCollection.find(ids).toArray();
+                res.send(result);
+            }
+        })
+        // app.patch('/remove-class/:id', async (req, res) => {
+        //     const id = req.params.id;
+        //     const 
+        // })
         await client.db("admin").command({ ping: 1 });
         console.log("Pinged your deployment. You successfully connected to MongoDB!");
     } finally {
@@ -121,6 +167,11 @@ async function run() {
     }
 }
 run().catch(console.dir);
+
+
+// const ids = ['6486d641034e0ab577fadc2f', '6486d5f6034e0ab577fadc2e', '6486a3999f11847ee785e574'];
+// const query = { _id: { $in: ids.map(id => new ObjectId(id)) } };
+// console.log(query);
 
 
 app.listen(port, () => {
