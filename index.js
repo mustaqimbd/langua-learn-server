@@ -4,6 +4,7 @@ const port = process.env.PORT || 5000;
 const cors = require('cors')
 const { MongoClient, ServerApiVersion, ObjectId } = require('mongodb');
 require('dotenv').config()
+const stripe = require('stripe')(process.env.Payment_secret_key)
 
 //Middleware
 app.use(cors())
@@ -25,7 +26,6 @@ async function run() {
         await client.connect();
         const usersCollection = client.db('langua_db').collection('users')
         const classesCollection = client.db('langua_db').collection('classes')
-        const userSelectedclassesCollection = client.db('langua_db').collection('selected_classes')
         app.get('/', (req, res) => {
             res.send('The server is running')
         })
@@ -156,10 +156,29 @@ async function run() {
                 res.send(result);
             }
         })
-        // app.patch('/remove-class/:id', async (req, res) => {
-        //     const id = req.params.id;
-        //     const 
-        // })
+        app.post('/create-payment-intent', async (req, res) => {
+            const { price } = req.body;
+            const amount = price * 100;
+            console.log('price', amount);
+            const paymentIntent = await stripe.paymentIntents.create({
+                description: 'Software development services',
+                shipping: {
+                    name: 'Jenny Rosen',
+                    address: {
+                        line1: '510 Townsend St',
+                        postal_code: '98140',
+                        city: 'San Francisco',
+                        state: 'CA',
+                        country: 'US',
+                    },
+                },
+                amount: amount,
+                currency: 'usd',
+                payment_method_types: ['card']
+            });
+            res.send({ clientSecret: paymentIntent.client_secret })
+        })
+
         await client.db("admin").command({ ping: 1 });
         console.log("Pinged your deployment. You successfully connected to MongoDB!");
     } finally {
@@ -167,11 +186,6 @@ async function run() {
     }
 }
 run().catch(console.dir);
-
-
-// const ids = ['6486d641034e0ab577fadc2f', '6486d5f6034e0ab577fadc2e', '6486a3999f11847ee785e574'];
-// const query = { _id: { $in: ids.map(id => new ObjectId(id)) } };
-// console.log(query);
 
 
 app.listen(port, () => {
